@@ -305,4 +305,56 @@ public class Tienda {
             System.out.println("TOTAL: " + d + "\n");
         }
     }
+
+    public void ArrayListToHashMapExample() {
+            ArrayList<String> arrayList = new ArrayList<>();
+            arrayList.add("clave1");
+            arrayList.add("clave2");
+            arrayList.add("clave3");
+            HashMap<String, Integer> hashMap = new HashMap<>();
+
+            for (String key : arrayList) {
+                // Asigna un valor a cada clave en el HashMap
+                hashMap.put(key, 0); // Puedes asignar el valor que desees
+            }
+
+            // Imprime el HashMap resultante
+            for (String key : hashMap.keySet()) {
+                System.out.println("Clave: " + key + ", Valor: " + hashMap.get(key));
+            }
+
+    }
+    public void Ejer4(){
+        Scanner scanner = new Scanner(System.in);
+
+        // Solicitar DNI y mostrar el cliente asociado
+        System.out.print("Introduce el DNI del cliente: ");
+        String dniCliente = scanner.nextLine();
+
+        try {
+            Cliente clienteEncontrado = buscarCliente(dniCliente, clientes);
+            System.out.println("Cliente encontrado: " + clienteEncontrado);
+        } catch (NoEncontrado e) {
+            System.out.println(e.getMessage());
+        }
+
+    }
+    public static Cliente buscarCliente(String dni, ArrayList<Cliente> clientes) throws NoEncontrado {
+        for (Cliente cliente : clientes) {
+            if (cliente.getDni().equals(dni)) {
+                return cliente;
+            }
+        }
+        throw new NoEncontrado("Cliente no encontrado");
+    }
+    public static Articulo buscarArticulo(String idArticulo, Articulo... articulos) throws NoEncontrado {
+        for (Articulo articulo : articulos) {
+            if (articulo.getIdArticulo().equals(idArticulo)) {
+                return articulo;
+            }
+        }
+        throw new NoEncontrado("Artículo no encontrado");
+    }
+
+
 }
