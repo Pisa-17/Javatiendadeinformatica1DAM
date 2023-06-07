@@ -124,6 +124,14 @@ public class Tienda {
                     pedidosClientePISA();
                     break;
                 }
+                case 16:{
+                    pruebatotal();
+                    break;
+                }
+                case 17:{
+                    ejercicio1examen();
+                    break;
+                }
             }
         }while (opcion != 9);
     }
@@ -456,15 +464,21 @@ public class Tienda {
             i++;
         }
     }
-    private double calcularImportePedido(Pedido pedido) {
+    public double calcularImportePedido(Pedido pedido) {
         double importeTotal = 0;
 
-        for (Articulo articulo : pedido.getListArticulo()) {
-            importeTotal += articulo.getPvp() * articulo.getExistencias();
+        for (Articulo lineaPedido : pedido.getListArticulo()) {
+            String idArticulo = lineaPedido.getIdArticulo();
+            Articulo articulo = articulos.get(buscarId(idArticulo));
+            double precioUnitario = articulo.getPvp();
+            int cantidad = lineaPedido.getExistencias();
+            double importeLinea = precioUnitario * cantidad;
+            importeTotal += importeLinea;
         }
 
         return importeTotal;
     }
+
 
     private void listaArtOrdPISA() {
         String[] secciones = {"PERIFERICOS", "ALMACENAMIENTO", "IMPRESORAS", "MONITORES"};
@@ -483,7 +497,7 @@ public class Tienda {
         // Calcular el importe total de los pedidos
         double importeTotal = 0;
         for (Pedido pedido : pedidos) {
-            importeTotal += calcularImportePedido(pedido);
+            importeTotal += calcularImportePedidoPISA(pedido);
         }
 
         // Mostrar la lista de pedidos por fecha
@@ -503,8 +517,8 @@ public class Tienda {
             System.out.println("ID: " + pedido.getIdPedido());
             System.out.println("Cliente: " + pedido.getClientePedido().getNombre());
             System.out.println("Artículos:");
-            for (Articulo articulo : pedido.getListArticulo()) {
-                System.out.println("- " + articulo.getDescripcion() + " - Cantidad: " + articulo.getExistencias());
+            for (LineaPedido l :pedido.getCestaCompra()){
+                System.out.println(articulos.get(buscarId(l.getIdArticulo())).getDescripcion()+ "\t" + l.getUnidades());
             }
 
             System.out.println("--------------------------------------------------------");
@@ -513,40 +527,96 @@ public class Tienda {
         System.out.println("Importe total de los pedidos: " + importeTotal);
     }
     public void pedidosClientePISA() {
-        List<Pedido> pedidosCliente = new ArrayList<>();
-
-        System.out.println("INTRODUCE EL DNI CLIENTE PARA LISTAR SUS PEDIDOS: ");
-        String dni = sc.next();
-
-        // OBTENER LOS PEDIDOS DEL CLIENTE
-        for (Pedido p : pedidos) {
-            if (p.getClientePedido().getDni().equalsIgnoreCase(dni)) {
-                pedidosCliente.add(p);
+            for (Pedido p:pedidos){
+                System.out.println("\nLISTADO PEDIDO "+ p.getIdPedido()+ " - CLIENTE: " + p.getClientePedido().getNombre() );
+                for (LineaPedido l :p.getCestaCompra()){
+                    System.out.println(articulos.get(buscarId(l.getIdArticulo())).getDescripcion()+ "\t" + l.getUnidades());
+                }
             }
+
+    }
+    public double calcularImportePedidoPISA(Pedido pedido) {
+        double importeTotal = 0;
+
+        for (LineaPedido lineaPedido : pedido.getCestaCompra()) {
+            String idArticulo = lineaPedido.getIdArticulo();
+            Articulo articulo = articulos.get(buscarId(idArticulo));
+            double precioUnitario = articulo.getPvp();
+            int cantidad = lineaPedido.getUnidades();
+            double importeLinea = precioUnitario * cantidad;
+            importeTotal += importeLinea;
         }
 
-        // ORDENAR LOS PEDIDOS POR TOTAL EN FORMA DESCENDENTE
-        Collections.sort(pedidosCliente, new Comparator<Pedido>() {
-            @Override
-            public int compare(Pedido p1, Pedido p2) {
-                double total1 = calcularImportePedido(p1);
-                double total2 = calcularImportePedido(p2);
-                return Double.compare(total2, total1);
-            }
-        });
+        return importeTotal;
+    }
+    public void pruebatotal(){
+        Pedido pedido = pedidos.get(0); // Obtener el primer pedido de la lista
+        double totalPedido = calcularImportePedido(pedido);
+        System.out.println("El importe total del pedido es: " + totalPedido);
 
-        // LISTAR LOS PEDIDOS CON LOS DETALLES
-        for (Pedido pedido : pedidosCliente) {
-            System.out.println("PEDIDO " + pedido.getIdPedido() + " DE " + pedido.getClientePedido().getNombre());
-            for (LineaPedido lineaPedido : pedido.getCestaCompra()) {
-                String idArticulo = lineaPedido.getIdArticulo();
-                Articulo articulo = articulos.get(buscarId(idArticulo));
-                System.out.println(articulo.getDescripcion() + "\t- " + lineaPedido.getUnidades());
-            }
-            double total = calcularImportePedido(pedido);
-            System.out.println("TOTAL: " + total + "\n");
-        }
     }
 
+    public void ejercicio1examen(){
+        Scanner sc = new Scanner(System.in);
 
+        System.out.println("Introduce la sección del nuevo artículo:");
+        System.out.println("1 - PERIFERICOS");
+        System.out.println("2 - ALMACENAMIENTO");
+        System.out.println("3 - IMPRESORAS");
+        System.out.println("4 - MONITORES");
+        int seccion = sc.nextInt();
+        sc.nextLine();
+        // Obtener el número actual de artículos de la sección
+        int numArticulosSeccion = contarArticulosSeccion(seccion);
+
+        // Generar el ID del nuevo artículo
+        String idArticulo = generarIdArticulo(seccion, numArticulosSeccion);
+
+        // Solicitar el resto de los datos del artículo por teclado
+        System.out.println("Introduce la descripción del artículo:");
+        String descripcion = sc.nextLine();
+
+        System.out.println("Introduce las existencias del artículo:");
+        int existencias = sc.nextInt();
+
+        System.out.println("Introduce el precio del artículo:");
+        double precio = sc.nextDouble();
+
+        // Crear el objeto Articulo con los datos proporcionados
+        Articulo nuevoArticulo = new Articulo(idArticulo, descripcion, existencias, precio);
+
+        // Añadir el nuevo artículo a la lista de artículos
+        articulos.add(nuevoArticulo);
+
+        System.out.println("¡Artículo dado de alta correctamente!");
+    }
+
+    private String generarIdArticulo(int seccion, int numArticulosSeccion) {
+        String seccionStr = String.format("%02d", seccion);
+        String numArticulosStr = String.format("%03d", numArticulosSeccion + 1);
+        return seccionStr + "-" + numArticulosStr;
+    }
+
+    private int contarArticulosSeccion(int seccion) {
+        int contador = 0;
+        for (Articulo articulo : articulos) {
+            if (obtenerSeccionArticulo(articulo) == seccion) {
+                contador++;
+            }
+        }
+        return contador;
+    }
+    private int obtenerSeccionArticulo(Articulo articulo) {
+        String idArticulo = articulo.getIdArticulo();
+        String[] partes = idArticulo.split("-");
+        if (partes.length >= 1) {
+            String seccionStr = partes[0];
+            return Integer.parseInt(seccionStr);
+        }
+        return -1; // Si no se puede obtener la sección, devuelve un valor negativo como indicador de error
+    }
+
+    public static void limpiabuffer(){
+        sc.nextLine();
+    }
 }

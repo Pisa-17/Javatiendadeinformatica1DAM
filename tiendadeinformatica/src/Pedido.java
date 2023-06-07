@@ -11,6 +11,14 @@ public class Pedido {
 
     private List<LineaPedido> LineaPedido;
 
+    public List<LineaPedido> getLineaPedido() {
+        return LineaPedido;
+    }
+
+    public void setLineaPedido(List<LineaPedido> lineaPedido) {
+        LineaPedido = lineaPedido;
+    }
+
     public Pedido() {
     }
 
