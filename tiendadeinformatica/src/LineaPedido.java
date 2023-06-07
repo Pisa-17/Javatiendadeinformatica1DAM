@@ -1,7 +1,7 @@
 public class LineaPedido {
-    private String idArticulo;
-    private int cantidad;
-    private int Unidades;
+        private String idArticulo;
+        private int cantidad;
+        private int Unidades;
     public LineaPedido(String idArticulo, int cantidad) {
         this.idArticulo = idArticulo;
         this.cantidad = cantidad;

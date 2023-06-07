@@ -3,9 +3,9 @@ import java.time.LocalDate;
 import java.util.*;
 
 public class Tienda {
-    Scanner sc=new Scanner(System.in);
+    static Scanner sc=new Scanner(System.in);
     private static ArrayList<Pedido> pedidos;
-    private ArrayList <Articulo> articulos;
+    private static ArrayList <Articulo> articulos;
     private ArrayList <Cliente> clientes;
 
     private ArrayList<LineaPedido> pedidoAux = new ArrayList();
@@ -65,8 +65,8 @@ public class Tienda {
             System.out.println("\t\t\t\t10 - Archivo Clientes");
             System.out.println("\t\t\t\t11 - Archivo Clientes con pedido");
             System.out.println("\t\t\t\t12 - Archivo Clientes sin pedidos");
-            System.out.println("\t\t\t\t13 - Archivo Articulos");
-            System.out.println("\t\t\t\t14 - ");
+            System.out.println("\t\t\t\t13 - Comparar Articulos por unidades");
+            System.out.println("\t\t\t\t14 - Listado de articulos segun examen (PISA)");
 
             opcion=sc.nextInt();
             switch (opcion){
@@ -110,6 +110,18 @@ public class Tienda {
                 }
                 case 12:{
                     guardarDatosClientesinpedidoEnArchivo(clientes, "ClientesSinPedido.txt");
+                    break;
+                }
+                case 13:{
+                    ExamenRanking();
+                    break;
+                }
+                case 14:{
+                    listaArtOrdPISA();
+                    break;
+                }
+                case 15:{
+                    pedidosClientePISA();
                     break;
                 }
             }
@@ -220,6 +232,7 @@ public class Tienda {
             }
         }
     }
+
 
     private void leerArchivos() {
         try (ObjectInputStream oisArtPerifericos = new ObjectInputStream(new FileInputStream("perifericos.dat")))
@@ -433,4 +446,107 @@ public class Tienda {
         guardarDatosClienteEnArchivo(clientesSinPedidos, "ClientesconPedido.txt");
 
     }
+    public static void ExamenRanking(){
+        Collections.sort(articulos, new ComparaArticuloPorUnidades());
+        Iterator<Articulo> it = articulos.iterator();
+        int i = 0;
+        while (i < 5){
+            Articulo a=it.next();
+            System.out.println(a);
+            i++;
+        }
+    }
+    private double calcularImportePedido(Pedido pedido) {
+        double importeTotal = 0;
+
+        for (Articulo articulo : pedido.getListArticulo()) {
+            importeTotal += articulo.getPvp() * articulo.getExistencias();
+        }
+
+        return importeTotal;
+    }
+
+    private void listaArtOrdPISA() {
+        String[] secciones = {"PERIFERICOS", "ALMACENAMIENTO", "IMPRESORAS", "MONITORES"};
+        sc.nextLine();
+        System.out.println("PARA ORDENAR POR PRECIO < a >(-) > a <(+)");
+        String s = sc.nextLine();
+
+        // PREPARO EL ARRAYLIST AUXILIAR DE ORDENACIONES articulosL SEGÚN EL CRITERIO ESPECIFICADO
+        if (s.charAt(0) == '-') {
+            Collections.sort(articulos, new ComparaArticuloPorPrecio());
+        } else if (s.charAt(0) == '+') {
+            Collections.sort(articulos, new ComparaArticuloPorPrecio());
+            Collections.reverse(articulos);
+        }
+
+        // Calcular el importe total de los pedidos
+        double importeTotal = 0;
+        for (Pedido pedido : pedidos) {
+            importeTotal += calcularImportePedido(pedido);
+        }
+
+        // Mostrar la lista de pedidos por fecha
+        System.out.println("-----------------------------------------------");
+        System.out.println("Lista de pedidos por fecha:");
+        Collections.sort(pedidos, new Comparator<Pedido>() {
+            @Override
+            public int compare(Pedido p1, Pedido p2) {
+                return p1.getFechaPedido().compareTo(p2.getFechaPedido());
+            }
+        });
+
+        for (Pedido pedido : pedidos) {
+            System.out.println("Fecha: " + pedido.getFechaPedido() + " - Importe: " + calcularImportePedido(pedido));
+
+            // Mostrar todos los datos del pedido
+            System.out.println("ID: " + pedido.getIdPedido());
+            System.out.println("Cliente: " + pedido.getClientePedido().getNombre());
+            System.out.println("Artículos:");
+            for (Articulo articulo : pedido.getListArticulo()) {
+                System.out.println("- " + articulo.getDescripcion() + " - Cantidad: " + articulo.getExistencias());
+            }
+
+            System.out.println("--------------------------------------------------------");
+        }
+
+        System.out.println("Importe total de los pedidos: " + importeTotal);
+    }
+    public void pedidosClientePISA() {
+        List<Pedido> pedidosCliente = new ArrayList<>();
+
+        System.out.println("INTRODUCE EL DNI CLIENTE PARA LISTAR SUS PEDIDOS: ");
+        String dni = sc.next();
+
+        // OBTENER LOS PEDIDOS DEL CLIENTE
+        for (Pedido p : pedidos) {
+            if (p.getClientePedido().getDni().equalsIgnoreCase(dni)) {
+                pedidosCliente.add(p);
+            }
+        }
+
+        // ORDENAR LOS PEDIDOS POR TOTAL EN FORMA DESCENDENTE
+        Collections.sort(pedidosCliente, new Comparator<Pedido>() {
+            @Override
+            public int compare(Pedido p1, Pedido p2) {
+                double total1 = calcularImportePedido(p1);
+                double total2 = calcularImportePedido(p2);
+                return Double.compare(total2, total1);
+            }
+        });
+
+        // LISTAR LOS PEDIDOS CON LOS DETALLES
+        for (Pedido pedido : pedidosCliente) {
+            System.out.println("PEDIDO " + pedido.getIdPedido() + " DE " + pedido.getClientePedido().getNombre());
+            for (LineaPedido lineaPedido : pedido.getCestaCompra()) {
+                String idArticulo = lineaPedido.getIdArticulo();
+                Articulo articulo = articulos.get(buscarId(idArticulo));
+                System.out.println(articulo.getDescripcion() + "\t- " + lineaPedido.getUnidades());
+            }
+            double total = calcularImportePedido(pedido);
+            System.out.println("TOTAL: " + total + "\n");
+        }
+    }
+
+
 }
